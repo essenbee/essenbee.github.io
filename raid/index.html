@@ -56,21 +56,107 @@
       // END - Common prelude
       // -----------------------------------------------------------------------
 
-      void mainImage(out vec4 fragColor, in vec2 fragCoord)
+      float noiseFunction(vec2 pos)
       {
-        vec2 uv = fragCoord.xy/iResolution.xy;
-        uv = 2.0*uv - 1.0;
-        uv.x *= iResolution.x/iResolution.y;
-
-        vec3 col = vec3(0.0);
-
-        uv.y *= -1.0;
-        uv += 0.5;
-
-        col += texture2D(iChannel0, uv).xyz;
-        col += texture2D(iChannel1, uv).xyz - vec3(0.5);
-
-        fragColor = vec4 (col, 1.);
+          return texture2D(iChannel1, pos - 0.5).x * 2.0 - 1.0;
+      }
+      
+      float fbm(vec2 pos)
+      {
+          pos *= 0.02;
+          pos.y += iTime * -0.05;
+          float sum = 0.0;
+          float freq = 1.0;
+          float amp = 1.0;
+          
+          for (int i = 0; i < 4; i++)
+          {
+              sum += amp * noiseFunction(pos * freq);
+              amp *= 0.5;
+              freq *= 3.0;
+          }
+          
+          return sum;
+      }
+      
+      vec2 toPolarCoords(vec2 pos)
+      {
+          float radius = length(pos);
+          float angle = atan(pos.y, pos.x);
+          return vec2(radius, angle);
+      }
+      
+      vec2 toRectCoords(vec2 polar)
+      {
+          float x = polar.x * cos(polar.y);
+          float y = polar.x * sin(polar.y);
+          
+          return vec2(x,y);
+      }
+      
+      vec3 fire(vec2 pos)
+      {
+          pos.y += 0.75;
+          pos *= 5.0;
+          
+          float n = (exp(fbm(pos) - pos.y));
+          vec3 col = mix(vec3(pow(n, 0.4)), vec3(1.5 * n, 1.5 * pow(n,3.0), pow(n, 6.0)), n);
+          
+          return col;
+      }
+      
+      vec4 rocketPlume(vec2 pos)
+      {
+          pos.y *= -0.75;
+      
+          vec2 p = toPolarCoords(pos);
+          p.x -= 1.2;
+          
+          pos = toRectCoords(p);
+          vec3 col = fire(pos);
+          float alpha = smoothstep(0.1, -0.2, p.x) * (smoothstep(2.5, 2.0, p.y) * smoothstep(0.5, 1.5, p.y));
+          
+          return vec4(col, alpha);
+      }
+      
+      vec4 alf(vec2 pos)
+      {
+          pos.y -= 0.06;
+          pos *= 4.0;
+          pos += 0.5;
+          float a = pos.x >= 0.0 && pos.x <= 1.0 ? 1.0 : 0.0;
+          float b = pos.y >= 0.0 && pos.y <= 1.0 ? 1.0 : 0.0;
+          vec4 col = texture2D(iChannel0, pos) * a * b;
+          return col;
+      }
+      
+      vec3 rocketAlf(vec2 pos)
+      {
+          vec3 col = vec3(0.0);
+          pos -= 0.5;
+          vec4 rocketc = rocketPlume(pos);
+          col = mix(col, rocketc.xyz, rocketc.w);
+      
+          vec4 alfc = alf(pos);    
+          col = mix(col, alfc.xyz, alfc.w);
+          return col;
+      }
+      
+      
+      
+      void mainImage( out vec4 fragColor, in vec2 fragCoord )
+      {
+          // Normalized pixel coordinates (from 0 to 1)
+          vec2 uv = fragCoord/iResolution.xy;
+      
+          float offset = mix(1.0, -2.1, smoothstep(0.0, 10.0, mod(iTime, 10.0)));
+          uv.y += offset;
+      
+          vec3 col = rocketAlf(uv);    
+              
+          fragColor = vec4(
+              col,
+              1.0);
       }
 
     </script>
