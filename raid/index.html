@@ -58,7 +58,7 @@
 
       float noiseFunction(vec2 pos)
       {
-          return texture2D(iChannel1, pos - 0.5).x * 2.0 - 1.0;
+          return texture2D(iChannel1, mod(pos - 0.5, 1.0)).x * 2.0 - 1.0;
       }
       
       float fbm(vec2 pos)
@@ -126,6 +126,7 @@
           pos += 0.5;
           float a = pos.x >= 0.0 && pos.x <= 1.0 ? 1.0 : 0.0;
           float b = pos.y >= 0.0 && pos.y <= 1.0 ? 1.0 : 0.0;
+          pos.y = 1.0 - pos.y;
           vec4 col = texture2D(iChannel0, pos) * a * b;
           return col;
       }
@@ -141,8 +142,6 @@
           col = mix(col, alfc.xyz, alfc.w);
           return col;
       }
-      
-      
       
       void mainImage( out vec4 fragColor, in vec2 fragCoord )
       {
@@ -178,7 +177,7 @@
   </head>
 
   <body onload="start()">
-    <img id="image0" src="essenbee.png" style="visibility: collapse"/>
+    <img id="image0" src="RocketAlf2.png" style="visibility: collapse"/>
     <img id="image1" src="noise.png" style="visibility: collapse"/>
     <canvas id="glcanvas" class="gl">
       Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
