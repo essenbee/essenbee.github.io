@@ -21,6 +21,7 @@ var verticesTextureCoordBuffer;
 var verticesNormalBuffer;
 var verticesIndexBuffer;
 var image;
+var texture0;
 
 var width;
 var height;
@@ -73,6 +74,8 @@ function start() {
     initBuffers();
 
     // Next, load and set up the textures we'll be using.
+
+    texture0 = createTexture("image0");
 
     startTime = now();
 
@@ -217,6 +220,8 @@ function drawScene() {
 
   gl.bindBuffer(gl.ARRAY_BUFFER, verticesNormalBuffer);
   gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
+
+  bindTexture("iChannel0", texture0, 0);
 
   gl.uniform2f(gl.getUniformLocation(shaderProgram, "iResolution"), width, height);
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "iTime"), iTime);
