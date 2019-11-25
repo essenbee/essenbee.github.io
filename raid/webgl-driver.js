@@ -225,6 +225,9 @@ function drawScene() {
   bindTexture("iChannel0", texture0, 0);
   bindTexture("iChannel1", texture1, 1);
 
+  console.log(width);
+  console.log(height);
+
   gl.uniform2f(gl.getUniformLocation(shaderProgram, "iResolution"), width, height);
   gl.uniform1f(gl.getUniformLocation(shaderProgram, "iTime"), iTime);
 

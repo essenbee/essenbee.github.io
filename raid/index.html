@@ -15,7 +15,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>electric alfs</title>
+    <title>rocket alf</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <script src="webgl-driver.js" type="text/javascript"></script>
     <link href='https://fonts.googleapis.com/css?family=Josefin Slab' rel='stylesheet'>
@@ -58,7 +58,7 @@
 
       float noiseFunction(vec2 pos)
       {
-          return texture2D(iChannel1, mod(pos - 0.5, 1.0)).x * 2.0 - 1.0;
+          return texture2D(iChannel0, mod(pos - 0.5, 1.0)).x * 2.0 - 1.0;
       }
       
       float fbm(vec2 pos)
@@ -93,13 +93,21 @@
           
           return vec2(x,y);
       }
+
+      float tanh(float x)
+      {
+        float ex = exp(x);
+        float nex = exp(-x);
+        float sum = ex + nex;
+        return ex/sum - nex/sum;
+      }
       
       vec3 fire(vec2 pos)
       {
           pos.y += 0.75;
           pos *= 5.0;
           
-          float n = (exp(fbm(pos) - pos.y));
+          float n = tanh(exp(fbm(pos) - pos.y));
           vec3 col = mix(vec3(pow(n, 0.4)), vec3(1.5 * n, 1.5 * pow(n,3.0), pow(n, 6.0)), n);
           
           return col;
@@ -108,7 +116,6 @@
       vec4 rocketPlume(vec2 pos)
       {
           pos.y *= -0.75;
-      
           vec2 p = toPolarCoords(pos);
           p.x -= 1.2;
           
@@ -122,41 +129,44 @@
       vec4 alf(vec2 pos)
       {
           pos.y -= 0.06;
+          pos.y *= -1.0;
           pos *= 4.0;
           pos += 0.5;
           float a = pos.x >= 0.0 && pos.x <= 1.0 ? 1.0 : 0.0;
           float b = pos.y >= 0.0 && pos.y <= 1.0 ? 1.0 : 0.0;
-          pos.y = 1.0 - pos.y;
-          vec4 col = texture2D(iChannel0, pos) * a * b;
+          vec4 col = texture2D(iChannel1, pos) * a * b;
           return col;
       }
       
       vec3 rocketAlf(vec2 pos)
       {
           vec3 col = vec3(0.0);
-          pos -= 0.5;
           vec4 rocketc = rocketPlume(pos);
           col = mix(col, rocketc.xyz, rocketc.w);
-      
           vec4 alfc = alf(pos);    
           col = mix(col, alfc.xyz, alfc.w);
           return col;
       }
-      
+
       void mainImage( out vec4 fragColor, in vec2 fragCoord )
-      {
-          // Normalized pixel coordinates (from 0 to 1)
-          vec2 uv = fragCoord/iResolution.xy;
-      
-          float offset = mix(1.0, -2.1, smoothstep(0.0, 10.0, mod(iTime, 10.0)));
-          uv.y += offset;
-      
-          vec3 col = rocketAlf(uv);    
-              
-          fragColor = vec4(
-              col,
-              1.0);
-      }
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = (fragCoord/iResolution.xy) * 2.0 - 1.0;
+    uv.x *= iResolution.x / iResolution.y;
+    float period = 10.0;
+    float time = mod(iTime, period);
+    float offset = mix(1.0, -3.0, smoothstep(0.0, period, time));
+    uv.y += offset;
+
+    vec3 col = rocketAlf(uv * 0.5);    
+    // Fade in/out
+    col *= smoothstep(0.0, 0.5, time);
+    col *= 1.0 - smoothstep(period - 0.5, period, time);
+    
+    fragColor = vec4(
+        col,
+        1.0);
+}
 
     </script>
 
@@ -177,8 +187,8 @@
   </head>
 
   <body onload="start()">
-    <img id="image0" src="RocketAlf2.png" style="visibility: collapse"/>
-    <img id="image1" src="noise.png" style="visibility: collapse"/>
+    <img id="image1" src="RocketAlf2.png" style="visibility: collapse"/>
+    <img id="image0" src="noise.png" style="visibility: collapse"/>
     <canvas id="glcanvas" class="gl">
       Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
     </canvas>
