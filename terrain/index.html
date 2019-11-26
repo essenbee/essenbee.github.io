@@ -160,7 +160,7 @@ float heightFunction(vec2 p)
     for (int i = 0; i < 7; i++)
     {
         f += amplitude * texture2D(iChannel0, period * p).x;
-        rot(p, 1.0);
+        rot(p, 1.3);
         amplitude *= 0.5;
         period *= 2.0;
     }
